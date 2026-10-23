@@ -674,7 +674,7 @@ async function playRollSequence(gameId, restart) {
     result.textContent = 'The heavens are turning…';
     meta.textContent = 'ROLL ' + (i + 1) + ' OF ' + o.rolls.length + ' · ' + (i % 2 === 0 ? nameOf(g.playerA) : nameOf(g.playerB)) + ' rolls';
     if (!reduced) {
-      const endAt = Date.now() + 1050;
+      const endAt = Date.now() + 3000;
       while (Date.now() < endAt) {
         if (token !== watchRunToken) return;
         const a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6);
@@ -690,7 +690,7 @@ async function playRollSequence(gameId, restart) {
     wisdom.classList.add('visible');
     if (harmony) {
       theatre.style.boxShadow = 'inset 0 0 80px rgba(45,220,133,.22),0 0 34px rgba(45,220,133,.12)';
-      await pause(reduced ? 700 : 1800);
+      await pause(5000);
       theatre.style.boxShadow = '';
       if (token !== watchRunToken) return;
       if (i === o.rolls.length - 1) {
@@ -699,7 +699,7 @@ async function playRollSequence(gameId, restart) {
       }
       break;
     }
-    await pause(reduced ? 500 : 1500);
+    await pause(5000);
   }
 }
 
