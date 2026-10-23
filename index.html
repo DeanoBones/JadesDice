@@ -219,9 +219,22 @@ details{color:#d6e2d8}summary{color:#c8d8cb}footer{max-width:1180px;color:#80958
 @keyframes theatre-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .theatre-kicker{font-size:.72rem;letter-spacing:.24em;color:#c7a35c;text-transform:uppercase}
 .theatre-dice{display:flex;justify-content:center;align-items:center;gap:22px;min-height:142px;padding:16px 0}
-.theatre-dice .die{--s:104px}
-.theatre-dice .die.tumble{animation:ritual-tumble .28s ease-in-out infinite alternate}
+.theatre-dice .die{--s:104px;transform-style:preserve-3d;box-shadow:inset 4px 4px 10px rgba(220,255,232,.3),inset -7px -8px 12px rgba(0,0,0,.38),0 0 28px rgba(32,201,123,.25),0 8px 0 #032a1d;position:relative;border-radius:18px}
+.theatre-dice .die.tumble{animation:ritual-tumble .28s ease-in-out infinite alternate;transform-style:preserve-3d}
+.theatre-dice .die.settled{animation:die-settle .65s cubic-bezier(.2,.8,.2,1) both}
+@keyframes die-settle{0%{transform:rotate(18deg) translateY(-16px) scale(1.08)}65%{transform:rotate(-5deg) translateY(3px)}100%{transform:rotate(0) translateY(0)}}
 @keyframes ritual-tumble{from{transform:translateY(8px) rotate(-18deg) scale(.97)}to{transform:translateY(-14px) rotate(22deg) scale(1.04)}}
+.cube-wrap{width:112px;height:112px;display:grid;place-items:center;perspective:650px;flex:0 0 auto;visibility:visible;opacity:1}
+.theatre-dice>.die{display:inline-block;flex:0 0 auto;visibility:visible;opacity:1}
+.cube-face .pips{box-sizing:border-box;display:grid;width:100%;height:100%;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.cube{width:82px;height:82px;position:relative;transform-style:preserve-3d;transform:rotateX(-8deg) rotateY(-14deg)}
+.cube-face{position:absolute;inset:0;width:82px;height:82px;border:1px solid #80efb3;border-radius:13px;background:linear-gradient(145deg,#45d79a 0%,#168354 42%,#063d2b 100%);box-shadow:inset 3px 3px 8px rgba(220,255,232,.28),inset -5px -7px 10px rgba(0,0,0,.35);backface-visibility:hidden}
+.cube-face .pips{padding:15%}
+.cube-face.front{transform:rotateY(0deg) translateZ(41px)}.cube-face.back{transform:rotateY(180deg) translateZ(41px)}.cube-face.right{transform:rotateY(90deg) translateZ(41px)}.cube-face.left{transform:rotateY(-90deg) translateZ(41px)}.cube-face.top{transform:rotateX(90deg) translateZ(41px)}.cube-face.bottom{transform:rotateX(-90deg) translateZ(41px)}
+.cube.tumble{animation:cube-roll .38s linear infinite;}
+.cube.settled{animation:cube-land .7s cubic-bezier(.18,.82,.25,1) both}
+@keyframes cube-roll{0%{transform:rotateX(0deg) rotateY(0deg) rotateZ(0deg)}100%{transform:rotateX(360deg) rotateY(540deg) rotateZ(180deg)}}
+@keyframes cube-land{0%{transform:rotateX(38deg) rotateY(32deg) translateY(-12px)}65%{transform:rotateX(-10deg) rotateY(-8deg) translateY(3px)}100%{transform:rotateX(-8deg) rotateY(-14deg) translateY(0)}}
 .theatre-result{min-height:34px;color:#e4c77f;font-family:serif;font-size:clamp(1.3rem,3vw,1.8rem);letter-spacing:.1em;text-transform:uppercase}
 .theatre-wisdom{min-height:30px;margin:8px auto 0;max-width:42ch;color:#b7c8bb;font-family:serif;font-size:1.05rem;font-style:italic;opacity:0;transform:translateY(5px);transition:opacity .9s ease,transform .9s ease}
 .theatre-wisdom.visible{opacity:1;transform:translateY(0)}
@@ -293,7 +306,7 @@ details{color:#d6e2d8}summary{color:#c8d8cb}footer{max-width:1180px;color:#80958
       <div class="theatre-result" id="theatreResult">Awaiting the roll</div>
       <div class="theatre-wisdom" id="theatreWisdom"></div>
       <div class="theatre-meta" id="theatreMeta"></div>
-      <div class="theatre-actions"><button class="btn" id="replayRolls">Replay sequence</button></div>
+      <div class="theatre-actions"><button class="btn primary" id="nextRoll" disabled>Roll next</button><button class="btn" id="replayRolls">Quick replay</button></div>
     </section>
     <div id="games"><div class="empty">Loading games from Base…</div></div>
   </section>
@@ -412,6 +425,16 @@ function dieHtml(n, cls) {
   let cells = '';
   for (let i = 0; i < 9; i++) cells += PIPS[n].includes(i) ? '<i class="pip"></i>' : '<i></i>';
   return '<span class="die ' + (cls || '') + '" role="img" aria-label="' + n + '"><span class="pips">' + cells + '</span></span>';
+}
+function cubeHtml(n, cls) {
+  const vals = [n, n === 6 ? 1 : n + 1, n === 5 ? 2 : n + 2, n === 4 ? 3 : n + 3, n === 3 ? 4 : n + 3, n === 2 ? 5 : n - 1].map(v => ((v - 1) % 6) + 1);
+  const faces = ['front','back','right','left','top','bottom'];
+  const html = faces.map((face, i) => {
+    let cells = '';
+    for (let j = 0; j < 9; j++) cells += PIPS[vals[i]].includes(j) ? '<i class="pip"></i>' : '<i></i>';
+    return '<span class="cube-face ' + face + '"><span class="pips">' + cells + '</span></span>';
+  }).join('');
+  return '<span class="cube-wrap" role="img" aria-label="Die shows ' + n + '"><span class="cube ' + (cls || '') + '">' + html + '</span></span>';
 }
 function replay(secretA, secretB) {
   const seed = ethersLib.keccak256(abi.encode(['bytes32', 'bytes32'], [secretA, secretB]));
@@ -628,7 +651,7 @@ function cardHtml(g) {
           const dbl = r[0] === r[1];
           return '<li><span class="nm">' + esc(nameOf(who)) + '</span>' + dieHtml(r[0], 'sm') + dieHtml(r[1], 'sm') + '<span class="roll-omen' + (dbl ? ' roll-omen-harmony' : '') + '">' + esc(wisdomLabel(r[0], r[1])) + '</span>' + (dbl ? '<span class="dbl">Harmony</span>' : '') + '</li>';
         }).join('');
-        extra += '<div class="ga"><button class="btn primary" data-watch="' + g.id + '">Watch roll sequence</button></div><details><summary>Check full roll history (' + o.rolls.length + ')</summary><ul class="rolls">' + items + '</ul></details>';
+        extra += '<div class="ga"><button class="btn primary" data-watch="' + g.id + '">Watch ritual</button><button class="btn" data-quick-watch="' + g.id + '">Quick replay</button></div><details><summary>Check full roll history (' + o.rolls.length + ')</summary><ul class="rolls">' + items + '</ul></details>';
       }
     }
   }
@@ -650,58 +673,94 @@ function cardHtml(g) {
 let watchedGameId = null;
 let watchedRolls = [];
 let watchRunToken = 0;
+let ritualIndex = 0;
+let ritualGame = null;
+let ritualBusy = false;
 const pause = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-async function playRollSequence(gameId, restart) {
+function showRoll(actual, spinning) {
+  const cls = spinning ? 'tumble' : 'settled';
+  $('theatreDice').innerHTML = dieHtml(actual[0], cls) + dieHtml(actual[1], cls);
+}
+async function animateRitualRoll(index, token) {
+  if (!ritualGame || token !== watchRunToken || ritualBusy) return;
+  ritualBusy = true;
+  const actual = watchedRolls[index];
+  const g = ritualGame;
+  const dice = $('theatreDice'), result = $('theatreResult'), wisdom = $('theatreWisdom'), meta = $('theatreMeta');
+  $('nextRoll').disabled = true;
+  wisdom.classList.remove('visible');
+  result.textContent = 'The heavens are turning…';
+  meta.textContent = 'ROLL ' + (index + 1) + ' OF ' + watchedRolls.length + ' · ' + (index % 2 === 0 ? nameOf(g.playerA) : nameOf(g.playerB)) + ' rolls';
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduced) {
+    const endAt = Date.now() + 2400;
+    while (Date.now() < endAt) {
+      if (token !== watchRunToken) { ritualBusy = false; return; }
+      const a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6);
+      dice.innerHTML = cubeHtml(a, 'tumble') + cubeHtml(b, 'tumble');
+      await pause(85);
+    }
+  }
+  if (token !== watchRunToken) { ritualBusy = false; return; }
+  dice.innerHTML = cubeHtml(actual[0], 'settled') + cubeHtml(actual[1], 'settled');
+  const harmony = actual[0] === actual[1];
+  result.textContent = harmony ? (actual[0] === 1 ? 'PERFECT HARMONY' : 'HARMONY') : actual[0] + ' · ' + actual[1];
+  wisdom.textContent = wisdomLabel(actual[0], actual[1]);
+  wisdom.classList.add('visible');
+  if (harmony) {
+    $('rollTheatre').style.boxShadow = 'inset 0 0 80px rgba(45,220,133,.22),0 0 34px rgba(45,220,133,.12)';
+    meta.textContent = 'THE DOUBLE HAS BEEN REVEALED';
+    $('nextRoll').textContent = 'Ritual complete';
+    $('nextRoll').disabled = true;
+    $('rollTheatre').style.setProperty('--harmony','1');
+  } else {
+    $('nextRoll').textContent = index === watchedRolls.length - 1 ? 'Sequence complete' : 'Roll next';
+    $('nextRoll').disabled = index >= watchedRolls.length - 1;
+  }
+  ritualIndex = index + 1;
+  ritualBusy = false;
+}
+function prepareTheatre(gameId, mode) {
   const g = state.games.find(x => String(x.id) === String(gameId));
   if (!g) return;
   const o = outcome(g);
   if (!o || !o.rolls || !o.rolls.length) { toast('This game does not have a complete revealed roll sequence to replay.', ''); return; }
-  watchedGameId = String(gameId); watchedRolls = o.rolls;
+  watchedGameId = String(gameId); watchedRolls = o.rolls; ritualGame = g;
   const token = ++watchRunToken;
-  const theatre = $('rollTheatre');
-  theatre.classList.add('active');
+  ritualIndex = 0; ritualBusy = false;
+  $('rollTheatre').style.boxShadow = '';
+  $('rollTheatre').classList.add('active');
   $('theatreKicker').textContent = 'GAME ' + g.id + ' · THE CELESTIAL TABLE';
-  theatre.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  const dice = $('theatreDice');
-  const result = $('theatreResult');
-  const wisdom = $('theatreWisdom');
-  const meta = $('theatreMeta');
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  for (let i = 0; i < o.rolls.length; i++) {
-    if (token !== watchRunToken) return;
-    const actual = o.rolls[i];
-    wisdom.classList.remove('visible');
-    result.textContent = 'The heavens are turning…';
-    meta.textContent = 'ROLL ' + (i + 1) + ' OF ' + o.rolls.length + ' · ' + (i % 2 === 0 ? nameOf(g.playerA) : nameOf(g.playerB)) + ' rolls';
-    if (!reduced) {
-      const endAt = Date.now() + 3000;
-      while (Date.now() < endAt) {
+  $('theatreDice').innerHTML = cubeHtml(1, 'settled') + cubeHtml(1, 'settled');
+  $('theatreResult').textContent = mode === 'ritual' ? 'The ritual awaits your hand' : 'Preparing the sequence…';
+  $('theatreWisdom').textContent = '';
+  $('theatreWisdom').classList.remove('visible');
+  $('theatreMeta').textContent = mode === 'ritual' ? 'ADVANCE EACH ROLL AT YOUR OWN PACE' : '';
+  $('nextRoll').textContent = 'Roll first dice';
+  $('nextRoll').disabled = mode !== 'ritual';
+  $('nextRoll').hidden = mode !== 'ritual';
+  $('replayRolls').textContent = mode === 'ritual' ? 'Quick replay' : 'Replay sequence';
+  $('rollTheatre').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (mode === 'quick') {
+    (async () => {
+      for (let i = 0; i < watchedRolls.length; i++) {
         if (token !== watchRunToken) return;
-        const a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6);
-        dice.innerHTML = dieHtml(a, 'tumble') + dieHtml(b, 'tumble');
-        await pause(95);
+        await animateRitualRoll(i, token);
+        if (token !== watchRunToken) return;
+        if (watchedRolls[i][0] === watchedRolls[i][1]) break;
+        await pause(2400);
       }
-    }
-    if (token !== watchRunToken) return;
-    dice.innerHTML = dieHtml(actual[0], '') + dieHtml(actual[1], '');
-    const harmony = actual[0] === actual[1];
-    result.textContent = harmony ? (actual[0] === 1 ? 'PERFECT HARMONY' : 'HARMONY') : actual[0] + ' · ' + actual[1];
-    wisdom.textContent = wisdomLabel(actual[0], actual[1]);
-    wisdom.classList.add('visible');
-    if (harmony) {
-      theatre.style.boxShadow = 'inset 0 0 80px rgba(45,220,133,.22),0 0 34px rgba(45,220,133,.12)';
-      await pause(5000);
-      theatre.style.boxShadow = '';
-      if (token !== watchRunToken) return;
-      if (i === o.rolls.length - 1) {
-        result.textContent = 'THE WAGER IS DECIDED';
-        meta.textContent = o.text;
+      if (token === watchRunToken) {
+        $('theatreResult').textContent = 'THE WAGER IS DECIDED';
+        $('theatreMeta').textContent = o.text;
+        $('nextRoll').hidden = false;
+        $('nextRoll').disabled = true;
+        $('nextRoll').textContent = 'Ritual complete';
       }
-      break;
-    }
-    await pause(5000);
+    })();
   }
 }
+function playRollSequence(gameId, restart) { prepareTheatre(gameId, 'quick'); }
 
 function renderGames() {
   let list = state.games;
@@ -856,8 +915,10 @@ $('connect').addEventListener('click', async () => {
 });
 $('create').addEventListener('click', () => run('create'));
 document.addEventListener('click', (e) => {
-  const watch = e.target.closest('button[data-watch]');
-  if (watch) { playRollSequence(watch.dataset.watch, false); return; }
+  const ritual = e.target.closest('button[data-watch]');
+  if (ritual) { prepareTheatre(ritual.dataset.watch, 'ritual'); return; }
+  const quick = e.target.closest('button[data-quick-watch]');
+  if (quick) { prepareTheatre(quick.dataset.quickWatch, 'quick'); return; }
   const b = e.target.closest('button[data-act]');
   if (!b || b.disabled) return;
   run(b.dataset.act, b.dataset.id === undefined ? undefined : BigInt(b.dataset.id));
@@ -869,6 +930,7 @@ function setFilter(f) {
   renderGames();
 }
 $('replayRolls').addEventListener('click', () => { if (watchedGameId !== null) playRollSequence(watchedGameId, true); });
+$('nextRoll').addEventListener('click', () => { if (ritualGame && ritualIndex < watchedRolls.length && !ritualBusy) animateRitualRoll(ritualIndex, watchRunToken); });
 $('fAll').addEventListener('click', () => setFilter('all'));
 $('fMine').addEventListener('click', () => setFilter('mine'));
 
