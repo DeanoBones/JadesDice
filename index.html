@@ -665,6 +665,7 @@ async function refresh() {
     return;
   }
   render();
+  maybeAutoPrepareTheatre();
 }
 
 /* ---------- rendering ---------- */
@@ -773,6 +774,23 @@ let watchRunToken = 0;
 let ritualIndex = 0;
 let ritualGame = null;
 let ritualBusy = false;
+let autoTheatreGameId = (() => { try { return localStorage.getItem('jadesDiceLastGame'); } catch (_) { return null; } })();
+let autoTheatrePreparedId = null;
+function rememberTheatreGame(gameId) {
+  autoTheatreGameId = String(gameId);
+  autoTheatrePreparedId = null;
+  try { localStorage.setItem('jadesDiceLastGame', autoTheatreGameId); } catch (_) { /* storage may be unavailable */ }
+}
+function maybeAutoPrepareTheatre() {
+  if (!autoTheatreGameId || autoTheatrePreparedId === autoTheatreGameId) return;
+  const g = state.games.find(x => String(x.id) === autoTheatreGameId);
+  if (!g) return;
+  const o = outcome(g);
+  if (o && o.rolls && o.rolls.length) {
+    autoTheatrePreparedId = autoTheatreGameId;
+    prepareTheatre(autoTheatreGameId, 'auto');
+  }
+}
 const pause = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function animateRitualRoll(index, token) {
   if (!ritualGame || token !== watchRunToken || ritualBusy) return;
@@ -829,7 +847,10 @@ async function animateRitualRoll(index, token) {
   wisdom.classList.add('visible');
   if (harmony) {
     $('rollTheatre').style.boxShadow = 'inset 0 0 80px rgba(45,220,133,.22),0 0 34px rgba(45,220,133,.12)';
-    meta.textContent = 'THE DOUBLE HAS BEEN REVEALED';
+    const finalOutcome = outcome(g);
+    const winnerIsHost = finalOutcome && finalOutcome.winner && same(finalOutcome.winner, g.playerA);
+    const winnerIsChallenger = finalOutcome && finalOutcome.winner && same(finalOutcome.winner, g.playerB);
+    meta.textContent = (winnerIsHost ? 'HOST WINS!' : winnerIsChallenger ? 'CHALLENGER WINS!' : 'HARMONY ACHIEVED') + ' · PERFECT HARMONY';
     $('nextRoll').textContent = 'Ritual complete';
     $('nextRoll').disabled = true;
     $('rollTheatre').style.setProperty('--harmony','1');
@@ -844,6 +865,8 @@ async function animateRitualRoll(index, token) {
 function prepareTheatre(gameId, mode) {
   const g = state.games.find(x => String(x.id) === String(gameId));
   if (!g) return;
+  if (mode !== 'auto') rememberTheatreGame(gameId);
+  if (String(gameId) === String(autoTheatreGameId)) autoTheatrePreparedId = String(gameId);
   const o = outcome(g);
   if (!o || !o.rolls || !o.rolls.length) { toast('This game does not have a complete revealed roll sequence to replay.', ''); return; }
   watchedGameId = String(gameId); watchedRolls = o.rolls; ritualGame = g;
@@ -929,6 +952,7 @@ const actions = {
       toast('Cancelled. Your stake is under Ready to withdraw. Create the game again.', '');
       return;
     }
+    rememberTheatreGame(id);
     toast('Game ' + id + ' created. Tell your friend to join game ' + id + '.', '');
   },
   async join(id) {
@@ -946,7 +970,8 @@ const actions = {
     const tx = await d.joinGame(id, commit);
     setStatus('Joining…', '', true);
     await tx.wait();
-    toast('Joined game ' + id + '. Both players can reveal now.', '');
+    rememberTheatreGame(id);
+    toast('Joined game ' + id + '. Both players can reveal now. Once the result is ready, the ritual will load here automatically.', '');
   },
   async reveal(id) {
     await needWallet();
