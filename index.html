@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doubles</title>
+<meta name="description" content="Two players stake USDC on Base and take turns rolling. The first double takes the pot.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='8' y='8' width='84' height='84' rx='18' fill='%23c8312b'/%3E%3Ccircle cx='30' cy='30' r='9' fill='%23f7f4ea'/%3E%3Ccircle cx='70' cy='70' r='9' fill='%23f7f4ea'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23f7f4ea'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --red:#c8312b;
+  --red-deep:#a52620;
+  --ink:#17181c;
+  --bone:#f7f4ea;
+  --table:#eceeed;
+  --paper:#ffffff;
+  --line:#d9dcdb;
+  --muted:#575a63;
+  --win:#1f6b52;
+  --win-bg:#e6f2ed;
+  --warn-bg:#fdecea;
+  --font:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--table);color:var(--ink);font:400 16px/1.5 var(--font);font-optical-sizing:auto}
+button,input{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:3px solid #1b5fd1;outline-offset:2px;border-radius:6px}
+
+/* hero */
+.hero{background:var(--red);color:#fff;padding:22px 20px 96px}
+.hero-in{max-width:1040px;margin:0 auto}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:34px}
+.brand{font-weight:700;font-size:1.15rem;letter-spacing:-.01em}
+.who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.chip{background:rgba(255,255,255,.16);border-radius:999px;padding:6px 14px;font-size:.92rem}
+.hero-body{display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:.95;margin:0 0 14px;font-weight:800;letter-spacing:-.03em}
+.hero p{margin:0;max-width:36ch;font-size:1.15rem}
+.dice-pair{display:flex;gap:18px;padding:6px}
+
+/* dice */
+.die{--s:92px;display:inline-block;width:var(--s);height:var(--s);border-radius:calc(var(--s)*.2);background:var(--bone);
+  box-shadow:inset 0 calc(var(--s)*-.05) 0 rgba(0,0,0,.13),0 calc(var(--s)*.09) 0 rgba(0,0,0,.28);vertical-align:middle}
+.die.sm{--s:28px}
+.pips{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%;padding:15%}
+.pips i{display:block;place-self:center;width:80%;aspect-ratio:1;border-radius:50%}
+.pips i.pip{background:var(--ink)}
+.die.tumble{animation:tumble .5s ease-in-out infinite}
+.dice-pair .die:nth-child(2).tumble{animation-delay:-.2s}
+@keyframes tumble{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-16px) rotate(14deg)}100%{transform:translateY(0) rotate(-6deg)}}
+
+/* layout */
+main{max-width:1040px;margin:-64px auto 40px;padding:0 20px;display:grid;grid-template-columns:320px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:var(--paper);border-radius:14px;padding:22px;border:1px solid var(--line)}
+.panel+.panel{margin-top:22px}
+h2{font-size:1.25rem;line-height:1.2;margin:0 0 14px;font-weight:700;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+.stack>*+*{margin-top:12px}
+
+/* buttons and inputs */
+.btn{border:2px solid var(--ink);background:transparent;border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer;line-height:1.2}
+.btn:hover{background:rgba(23,24,28,.07)}
+.btn.primary{background:var(--red);border-color:var(--red);color:#fff}
+.btn.primary:hover{background:var(--red-deep);border-color:var(--red-deep)}
+.btn.light{border-color:#fff;color:#fff}
+.btn.light:hover{background:rgba(255,255,255,.16)}
+.btn.link{border:0;padding:4px 0;text-decoration:underline;font-weight:500}
+.btn:disabled,body.busy .btn{opacity:.5;cursor:not-allowed}
+label{display:block;font-weight:600;margin-bottom:6px}
+.field{display:flex;align-items:stretch;border:2px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
+.field input{border:0;padding:10px 12px;width:100%;min-width:0;background:transparent;font-size:1.1rem;font-weight:600}
+.field input:focus-visible{outline:none}
+.field:focus-within{outline:3px solid #1b5fd1;outline-offset:2px}
+.field span{padding:10px 14px;background:var(--table);font-weight:600;display:flex;align-items:center}
+
+/* wallet rows */
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.kv:first-of-type{border-top:0}
+.kv b{font-variant-numeric:tabular-nums}
+
+/* games */
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 14px;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.game{border-top:1px solid var(--line);border-left:6px solid var(--muted);padding:16px 0 16px 16px;margin-left:0}
+.game:first-child{border-top:0}
+.game.s-open{border-left-color:var(--ink)}
+.game.s-active{border-left-color:var(--red)}
+.game.s-win{border-left-color:var(--win)}
+.game.s-done{border-left-color:#9a9da6}
+.gh{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.gh strong{font-size:1.1rem}
+.pot{font-weight:600}
+.tag{font-size:.9rem;color:var(--muted)}
+.gm{margin-top:4px;color:var(--muted);font-size:.95rem}
+.ga{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+.note{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--table);font-size:.92rem}
+.note.bad{background:var(--warn-bg)}
+.note.win{background:var(--win-bg);color:#14513d;font-weight:600}
+details{margin-top:10px}
+summary{cursor:pointer;font-weight:600}
+.rolls{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.rolls li{display:flex;align-items:center;gap:8px;font-size:.92rem}
+.rolls .nm{width:92px;color:var(--muted)}
+.rolls .dbl{color:var(--win);font-weight:700}
+.addr{font-family:var(--mono);font-size:.88em}
+.empty{padding:22px 0;color:var(--muted)}
+
+/* banners and toast */
+#alerts .alert{background:var(--warn-bg);border:2px solid var(--red);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-weight:500}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:min(560px,calc(100vw - 32px));background:var(--ink);color:#fff;
+  padding:12px 18px;border-radius:12px;font-weight:500;display:none;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#toast.show{display:block}
+#toast.bad{background:var(--red-deep)}
+#toast.spin::before{content:"";display:inline-block;width:.9em;height:.9em;margin-right:.6em;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;vertical-align:-.1em;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+footer{max-width:1040px;margin:0 auto;padding:0 20px 56px;color:var(--muted);font-size:.92rem}
+footer p{margin:0 0 8px;max-width:72ch}
+
+@media (prefers-reduced-motion:reduce){.die.tumble,#toast.spin::before{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-in">
+    <div class="bar">
+      <div class="brand">Doubles</div>
+      <div class="who">
+        <span class="chip" id="netchip" hidden></span>
+        <button class="btn light" id="connect">Connect wallet</button>
+      </div>
+    </div>
+    <div class="hero-body">
+      <div>
+        <h1>First double<br>takes the pot.</h1>
+        <p>Two players put in the same USDC stake and take turns rolling two dice. Nobody can fix the dice, and the winner is paid from the contract.</p>
+      </div>
+      <div class="dice-pair" id="heroDice" aria-hidden="true"></div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div>
+    <section class="panel" id="walletPanel">
+      <h2>Your wallet</h2>
+      <div id="walletBody" class="muted">Connect a wallet to play. You can browse games without one.</div>
+    </section>
+
+    <section class="panel">
+      <h2>Start a game</h2>
+      <div class="stack">
+        <div>
+          <label for="stake">Stake for each player</label>
+          <div class="field"><input id="stake" inputmode="decimal" value="1" autocomplete="off"><span>USDC</span></div>
+          <div class="small muted" id="stakeHint" style="margin-top:6px"></div>
+        </div>
+        <button class="btn primary" id="create" style="width:100%">Create game</button>
+        <p class="small muted" style="margin:0">Your secret for each game is saved in this browser. Back it up before you clear your browser data, or you won't be able to reveal.</p>
+        <div style="display:flex;gap:16px">
+          <button class="btn link small" id="backup">Back up secrets</button>
+          <button class="btn link small" id="restore">Restore secrets</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel" id="gamesPanel">
+    <div id="alerts"></div>
+    <div class="head">
+      <h2 style="margin:0">Games</h2>
+      <div class="seg" role="group" aria-label="Filter games">
+        <button id="fAll" aria-pressed="true">All games</button>
+        <button id="fMine" aria-pressed="false">My games</button>
+      </div>
+    </div>
+    <div id="games"><div class="empty">Loading games from Base…</div></div>
+  </section>
+</main>
+
+<footer>
+  <details>
+    <summary>How a game works</summary>
+    <p style="margin-top:10px">When you create or join, you lock in a fingerprint of a secret that only you know. Once two players are in, both reveal their secrets. The two secrets together decide every roll, so neither player nor anyone running the network can predict or steer the dice.</p>
+    <p>Players roll in turn, starting with the player who created the game, until someone rolls a double. The creator rolls first and has a small edge, about 55% to win. If a player doesn't reveal within 24 hours, the other player can settle the game and take the pot. Winnings and refunds sit in the contract until you withdraw them.</p>
+  </details>
+  <p style="margin-top:14px" id="contractLine"></p>
+  <p>This is an experiment. The contract hasn't been audited, so only play with small amounts you can afford to lose, and only with people you know.</p>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:20px">This page needs JavaScript to talk to your wallet.</p></noscript>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>window.ethers || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"><\/script>');</script>
+<script>
+/* MAIN */
+(function () {
+'use strict';
+
+/* ---------- Settings: change these if you ever redeploy ---------- */
+const CONFIG = {
+  chainId: 8453,
+  dice: '0xf531520073463Eb627282ef38f7b6098666850BF',
+  usdc: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  rpc: 'https://mainnet.base.org',
+  explorer: 'https://basescan.org'
+};
+
+const DICE_ABI = [
+  'function usdc() view returns (address)',
+  'function maxStake() view returns (uint256)',
+  'function nextGameId() view returns (uint256)',
+  'function winnings(address) view returns (uint256)',
+  'function getGame(uint256 id) view returns (tuple(address playerA, address playerB, uint256 stake, bytes32 commitA, bytes32 commitB, bytes32 secretA, bytes32 secretB, bool revealedA, bool revealedB, uint256 revealDeadline, uint8 status))',
+  'function createGame(uint256 stake, bytes32 commit) returns (uint256)',
+  'function joinGame(uint256 id, bytes32 commit)',
+  'function cancelGame(uint256 id)',
+  'function reveal(uint256 id, bytes32 secret)',
+  'function claimForfeit(uint256 id)',
+  'function withdraw()',
+  'event GameCreated(uint256 indexed id, address indexed playerA, uint256 stake)'
+];
+const ERC20_ABI = [
+  'function balanceOf(address) view returns (uint256)',
+  'function allowance(address,address) view returns (uint256)',
+  'function approve(address,uint256) returns (bool)'
+];
+
+const $ = (id) => document.getElementById(id);
+const ZERO = '0x0000000000000000000000000000000000000000';
+const STATUS = { OPEN: 1, ACTIVE: 2, FINISHED: 3, CANCELLED: 4 };
+
+if (!window.ethers) {
+  $('games').innerHTML = '<div class="empty">The wallet library failed to load. Check your connection, turn off any content blockers for this page, and reload.</div>';
+  return;
+}
+const ethersLib = window.ethers;
+
+const DICE = ethersLib.getAddress(CONFIG.dice.toLowerCase());
+const USDC = ethersLib.getAddress(CONFIG.usdc.toLowerCase());
+const abi = ethersLib.AbiCoder.defaultAbiCoder();
+
+const state = {
+  provider: new ethersLib.JsonRpcProvider(CONFIG.rpc, ethersLib.Network.from(CONFIG.chainId), { staticNetwork: ethersLib.Network.from(CONFIG.chainId) }),
+  signer: null, account: null,
+  ok: false, maxStake: null,
+  games: [], filter: 'all', busy: false,
+  eth: null, usdcBal: null, ready: 0n
+};
+
+/* ---------- small helpers ---------- */
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const short = (a) => a.slice(0, 6) + '…' + a.slice(-4);
+const same = (a, b) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
+function fmt(v) {
+  const s = ethersLib.formatUnits(v, 6);
+  return s.includes('.') ? s.replace(/0+$/, '').replace(/\.$/, '') : s;
+}
+function fmtEth(v) {
+  const n = Number(ethersLib.formatEther(v));
+  return n === 0 ? '0' : n < 0.0001 ? '<0.0001' : n.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+}
+const nameOf = (addr) => (same(addr, state.account) ? 'You' : short(addr));
+const diceRead = () => new ethersLib.Contract(DICE, DICE_ABI, state.provider);
+const diceWrite = () => new ethersLib.Contract(DICE, DICE_ABI, state.signer);
+const usdcRead = () => new ethersLib.Contract(USDC, ERC20_ABI, state.provider);
+const usdcWrite = () => new ethersLib.Contract(USDC, ERC20_ABI, state.signer);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let toastTimer;
+function setStatus(msg, kind, sticky) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (kind || '') + (sticky ? ' spin' : '');
+  clearTimeout(toastTimer);
+  if (!sticky) toastTimer = setTimeout(() => t.classList.remove('show'), kind === 'bad' ? 10000 : 5000);
+}
+const toast = (m, k) => setStatus(m, k, false);
+function clearStatus() { $('toast').classList.remove('show'); }
+
+function errMsg(e) {
+  const m = (e && (e.reason || e.shortMessage || (e.info && e.info.error && e.info.error.message) || e.message)) || String(e);
+  return m.length > 240 ? m.slice(0, 240) + '…' : m;
+}
+const rejected = (e) => e && (e.code === 'ACTION_REJECTED' || e.code === 4001);
+
+/* ---------- dice drawing and roll logic (mirrors the contract) ---------- */
+const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+function dieHtml(n, cls) {
+  let cells = '';
+  for (let i = 0; i < 9; i++) cells += PIPS[n].includes(i) ? '<i class="pip"></i>' : '<i></i>';
+  return '<span class="die ' + (cls || '') + '" role="img" aria-label="' + n + '"><span class="pips">' + cells + '</span></span>';
+}
+function replay(secretA, secretB) {
+  const seed = ethersLib.keccak256(abi.encode(['bytes32', 'bytes32'], [secretA, secretB]));
+  const out = [];
+  for (let i = 0; i < 200; i++) {
+    const r = BigInt(ethersLib.keccak256(abi.encode(['bytes32', 'uint256'], [seed, i])));
+    const d1 = Number(r % 6n) + 1;
+    const d2 = Number((r >> 128n) % 6n) + 1;
+    out.push([d1, d2]);
+    if (d1 === d2) return { rolls: out, winnerIsA: i % 2 === 0 };
+  }
+  return { rolls: out, winnerIsA: null };
+}
+const commitOf = (secret, addr, id) => ethersLib.keccak256(abi.encode(['bytes32', 'address', 'uint256'], [secret, addr, id]));
+
+/* hero dice: tumble once on load, land on a double */
+function heroDice() {
+  const box = $('heroDice');
+  const final = 1 + Math.floor(Math.random() * 6);
+  const show = (a, b, tumbling) => {
+    box.innerHTML = dieHtml(a, tumbling ? 'tumble' : '') + dieHtml(b, tumbling ? 'tumble' : '');
+  };
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { show(final, final, false); return; }
+  show(1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6), true);
+  const timer = setInterval(() => show(1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6), true), 90);
+  setTimeout(() => { clearInterval(timer); show(final, final, false); }, 1100);
+}
+
+/* ---------- secrets stored in this browser, keyed by commitment ---------- */
+const SPREFIX = 'doubles:' + DICE.toLowerCase() + ':';
+function saveSecret(commit, secret) { try { localStorage.setItem(SPREFIX + commit, secret); } catch (e) { /* storage blocked */ } }
+function loadSecret(commit) { try { return localStorage.getItem(SPREFIX + commit); } catch (e) { return null; } }
+function allSecrets() {
+  const out = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf(SPREFIX) === 0) out[k.slice(SPREFIX.length)] = localStorage.getItem(k);
+    }
+  } catch (e) { /* ignore */ }
+  return out;
+}
+
+/* ---------- wallet ---------- */
+async function connect(silent) {
+  if (!window.ethereum) {
+    if (!silent) toast('No wallet found. Install a wallet extension, or open this page in your wallet app\u2019s browser.', 'bad');
+    throw new Error('no wallet');
+  }
+  let bp = new ethersLib.BrowserProvider(window.ethereum);
+  if (silent) {
+    const accts = await window.ethereum.request({ method: 'eth_accounts' });
+    if (!accts || !accts.length) throw new Error('not connected');
+  } else {
+    await bp.send('eth_requestAccounts', []);
+  }
+  let net = await bp.getNetwork();
+  if (net.chainId !== BigInt(CONFIG.chainId)) {
+    try {
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
+    } catch (e) {
+      if (e && e.code === 4902) {
+        await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: '0x2105', chainName: 'Base', nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: [CONFIG.rpc], blockExplorerUrls: [CONFIG.explorer] }] });
+      } else { throw e; }
+    }
+    bp = new ethersLib.BrowserProvider(window.ethereum);
+  }
+  state.provider = bp;
+  state.signer = await bp.getSigner();
+  state.account = await state.signer.getAddress();
+  $('connect').textContent = short(state.account);
+  $('connect').title = 'Connected';
+  $('netchip').hidden = false;
+  $('netchip').textContent = 'Base';
+  if (window.ethereum.on && !connect.bound) {
+    connect.bound = true;
+    window.ethereum.on('accountsChanged', () => location.reload());
+    window.ethereum.on('chainChanged', () => location.reload());
+  }
+}
+async function needWallet() {
+  if (!state.ok) throw new Error('This page can\u2019t find the right contract on Base, so actions are turned off. Check the warning above the games list.');
+  if (!state.signer) await connect(false);
+}
+
+/* ---------- reading the chain ---------- */
+function plain(g, id) {
+  return {
+    id, playerA: g.playerA, playerB: g.playerB, stake: g.stake, commitA: g.commitA, commitB: g.commitB,
+    secretA: g.secretA, secretB: g.secretB, revealedA: g.revealedA, revealedB: g.revealedB,
+    deadline: Number(g.revealDeadline), status: Number(g.status)
+  };
+}
+async function verifyContract() {
+  const code = await state.provider.getCode(DICE);
+  if (code === '0x') throw new Error('No contract found at ' + DICE + ' on Base.');
+  const d = diceRead();
+  const u = await d.usdc();
+  if (!same(u, USDC)) throw new Error('This contract uses a different USDC address (' + u + ').');
+  state.maxStake = await d.maxStake();
+  state.ok = true;
+}
+async function loadGames() {
+  const d = diceRead();
+  const n = Number(await d.nextGameId());
+  const ids = [];
+  for (let i = n - 1; i >= Math.max(0, n - 40); i--) ids.push(i);
+  const res = await Promise.all(ids.map((i) => d.getGame(i)));
+  state.games = res.map((g, k) => plain(g, ids[k]));
+}
+async function loadWallet() {
+  if (!state.account) return;
+  const [eth, bal, ready] = await Promise.all([
+    state.provider.getBalance(state.account),
+    usdcRead().balanceOf(state.account),
+    diceRead().winnings(state.account)
+  ]);
+  state.eth = eth; state.usdcBal = bal; state.ready = ready;
+}
+async function refresh() {
+  try {
+    await Promise.all([loadGames(), loadWallet()]);
+    $('alerts').innerHTML = state.ok ? '' : $('alerts').innerHTML;
+  } catch (e) {
+    $('games').innerHTML = '<div class="empty">Couldn\u2019t read games from Base right now (' + esc(errMsg(e)) + '). This page will try again in a few seconds.</div>';
+    return;
+  }
+  render();
+}
+
+/* ---------- rendering ---------- */
+function renderWallet() {
+  const body = $('walletBody');
+  if (!state.account) {
+    body.className = 'muted';
+    body.innerHTML = 'Connect a wallet to play. You can browse games without one.';
+    return;
+  }
+  body.className = '';
+  body.innerHTML =
+    '<div class="kv"><span class="muted">Account</span><b class="addr">' + esc(short(state.account)) + '</b></div>' +
+    '<div class="kv"><span class="muted">USDC</span><b>' + (state.usdcBal === null ? '…' : esc(fmt(state.usdcBal))) + '</b></div>' +
+    '<div class="kv"><span class="muted">ETH for fees</span><b>' + (state.eth === null ? '…' : esc(fmtEth(state.eth))) + '</b></div>' +
+    '<div class="kv"><span class="muted">Ready to withdraw</span><b>' + esc(fmt(state.ready)) + ' USDC</b></div>' +
+    '<div style="margin-top:12px"><button class="btn primary" style="width:100%" data-act="withdraw"' + (state.ready > 0n ? '' : ' disabled') + '>Withdraw</button></div>' +
+    '<p class="small muted" style="margin:10px 0 0">Winnings and refunds wait here until you withdraw them to your wallet.</p>';
+}
+function timeLeft(deadline) {
+  const diff = deadline - Math.floor(Date.now() / 1000);
+  if (diff <= 0) return null;
+  return Math.floor(diff / 3600) + 'h ' + Math.floor((diff % 3600) / 60) + 'm left to reveal';
+}
+function outcome(g) {
+  if (g.status === STATUS.CANCELLED) return { kind: 'cancel', text: 'Cancelled before anyone joined. The stake went back to the creator.' };
+  if (g.status !== STATUS.FINISHED) return null;
+  const pot = fmt(g.stake * 2n);
+  let winner = null; let rolls = null; let how = '';
+  if (g.revealedA && g.revealedB) {
+    const r = replay(g.secretA, g.secretB);
+    rolls = r.rolls;
+    if (r.winnerIsA === null) return { kind: 'refund', text: 'No double came up in 200 rolls, so both stakes were refunded.', rolls };
+    winner = r.winnerIsA ? g.playerA : g.playerB;
+    how = 'by rolling a double';
+  } else if (g.revealedA) { winner = g.playerA; how = 'because the other player didn\u2019t reveal in time'; }
+  else if (g.revealedB) { winner = g.playerB; how = 'because the other player didn\u2019t reveal in time'; }
+  else return { kind: 'refund', text: 'Nobody revealed in time, so both stakes were refunded.' };
+  const youWon = same(winner, state.account);
+  return { kind: youWon ? 'win' : 'done', winner, rolls, text: (youWon ? 'You won ' : nameOf(winner) + ' won ') + pot + ' USDC ' + how + '.' };
+}
+function btn(act, id, label, cls) {
+  return '<button class="btn ' + (cls || '') + '" data-act="' + act + '" data-id="' + id + '">' + label + '</button>';
+}
+function cardHtml(g) {
+  const isA = same(g.playerA, state.account);
+  const isB = g.playerB !== ZERO && same(g.playerB, state.account);
+  const now = Math.floor(Date.now() / 1000);
+  const pot = fmt(g.stake * 2n);
+  const stake = fmt(g.stake);
+  let cls = 's-done'; let tag = ''; let meta = ''; const acts = []; let extra = '';
+
+  if (g.status === STATUS.OPEN) {
+    cls = 's-open'; tag = 'Waiting for an opponent';
+    meta = 'Stake ' + stake + ' USDC each. Created by ' + esc(nameOf(g.playerA)) + '.';
+    if (isA) acts.push(btn('cancel', g.id, 'Cancel and refund', ''));
+    else acts.push(btn('join', g.id, 'Join with ' + stake + ' USDC', 'primary'));
+  } else if (g.status === STATUS.ACTIVE) {
+    cls = 's-active';
+    const tl = timeLeft(g.deadline);
+    tag = tl || 'Reveal window closed';
+    meta = esc(nameOf(g.playerA)) + ' and ' + esc(nameOf(g.playerB)) + ' each put in ' + stake + ' USDC. ' +
+      esc(nameOf(g.playerA)) + (g.revealedA ? ' has revealed' : ' hasn\u2019t revealed yet') + ', ' +
+      esc(nameOf(g.playerB)) + (g.revealedB ? ' has revealed.' : ' hasn\u2019t revealed yet.');
+    const mine = isA ? g.revealedA : isB ? g.revealedB : true;
+    if ((isA || isB) && !mine && tl) acts.push(btn('reveal', g.id, 'Reveal my secret', 'primary'));
+    if ((isA || isB) && !tl) {
+      acts.push(btn('settle', g.id, 'Settle game', 'primary'));
+      extra += '<div class="note">The reveal window is closed. A player who revealed wins the pot. If nobody revealed, both stakes are refunded.</div>';
+    }
+  } else {
+    const o = outcome(g);
+    if (o) {
+      cls = o.kind === 'win' ? 's-win' : 's-done';
+      tag = g.status === STATUS.CANCELLED ? 'Cancelled' : 'Finished';
+      meta = g.status === STATUS.CANCELLED ? 'Stake ' + stake + ' USDC. Created by ' + esc(nameOf(g.playerA)) + '.' : esc(nameOf(g.playerA)) + ' and ' + esc(nameOf(g.playerB)) + ' each put in ' + stake + ' USDC.';
+      extra += '<div class="note ' + (o.kind === 'win' ? 'win' : '') + '">' + esc(o.text) + '</div>';
+      if (o.rolls && o.rolls.length) {
+        const items = o.rolls.map((r, i) => {
+          const who = i % 2 === 0 ? g.playerA : g.playerB;
+          const dbl = r[0] === r[1];
+          return '<li><span class="nm">' + esc(nameOf(who)) + '</span>' + dieHtml(r[0], 'sm') + dieHtml(r[1], 'sm') + (dbl ? '<span class="dbl">Double</span>' : '') + '</li>';
+        }).join('');
+        extra += '<details><summary>See every roll (' + o.rolls.length + ')</summary><ul class="rolls">' + items + '</ul></details>';
+      }
+    }
+  }
+
+  /* warn when a stored secret doesn't fit this game number */
+  if ((g.status === STATUS.OPEN || g.status === STATUS.ACTIVE) && (isA || isB)) {
+    const myCommit = isA ? g.commitA : g.commitB;
+    const sec = loadSecret(myCommit);
+    if (sec && commitOf(sec, state.account, g.id) !== myCommit) {
+      extra += '<div class="note bad">This game was made at the same moment as another one, so your secret won\u2019t match it and you couldn\u2019t reveal. ' + (g.status === STATUS.OPEN ? 'Cancel it and create the game again.' : '') + '</div>';
+    }
+  }
+
+  return '<article class="game ' + cls + '">' +
+    '<div class="gh"><strong>Game ' + g.id + '</strong><span class="pot">' + pot + ' USDC pot</span><span class="tag">' + esc(tag) + '</span></div>' +
+    '<div class="gm">' + meta + '</div>' + extra +
+    (acts.length ? '<div class="ga">' + acts.join('') + '</div>' : '') + '</article>';
+}
+function renderGames() {
+  let list = state.games;
+  if (state.filter === 'mine') {
+    list = list.filter((g) => same(g.playerA, state.account) || (g.playerB !== ZERO && same(g.playerB, state.account)));
+  }
+  $('games').innerHTML = list.length ? list.map(cardHtml).join('') :
+    '<div class="empty">' + (state.filter === 'mine' ? (state.account ? 'You haven\u2019t played any games yet. Create one and send a friend the game number.' : 'Connect a wallet to see your games.') : 'No games yet. Create the first one from the panel on the left.') + '</div>';
+}
+function render() {
+  renderWallet();
+  renderGames();
+  if (state.maxStake !== null) $('stakeHint').textContent = 'The most you can stake is ' + fmt(state.maxStake) + ' USDC. Your opponent matches it.';
+}
+
+/* ---------- actions ---------- */
+async function checkFunds(stake) {
+  await loadWallet();
+  if (state.usdcBal < stake) throw new Error('You need ' + fmt(stake) + ' USDC on Base for this, and your wallet has ' + fmt(state.usdcBal) + '.');
+  if (state.eth === 0n) throw new Error('Your wallet has no ETH on Base to pay network fees. Add a small amount, then try again.');
+}
+async function ensureAllowance(amount) {
+  const u = usdcWrite();
+  const cur = await u.allowance(state.account, DICE);
+  if (cur >= amount) return;
+  setStatus('Step 1 of 2: approve ' + fmt(amount) + ' USDC in your wallet…', '', true);
+  const tx = await u.approve(DICE, amount);
+  setStatus('Waiting for the approval to confirm…', '', true);
+  await tx.wait();
+  for (let i = 0; i < 12; i++) {
+    if ((await usdcRead().allowance(state.account, DICE)) >= amount) break;
+    await sleep(1000);
+  }
+}
+const actions = {
+  async create() {
+    await needWallet();
+    let stake;
+    try { stake = ethersLib.parseUnits(($('stake').value || '').trim() || '0', 6); }
+    catch (e) { throw new Error('Enter the stake as a number of USDC, like 1 or 0.5.'); }
+    if (stake <= 0n) throw new Error('The stake must be more than 0.');
+    if (stake > state.maxStake) throw new Error('The most you can stake here is ' + fmt(state.maxStake) + ' USDC.');
+    await checkFunds(stake);
+    const d = diceWrite();
+    const expected = await diceRead().nextGameId();
+    const secret = ethersLib.hexlify(ethersLib.randomBytes(32));
+    const commit = commitOf(secret, state.account, expected);
+    saveSecret(commit, secret);
+    await ensureAllowance(stake);
+    setStatus('Step 2 of 2: confirm the new game in your wallet…', '', true);
+    const tx = await d.createGame(stake, commit);
+    setStatus('Creating your game…', '', true);
+    const rc = await tx.wait();
+    let id = null;
+    for (const log of rc.logs) {
+      if (!same(log.address, DICE)) continue;
+      try { const p = d.interface.parseLog(log); if (p && p.name === 'GameCreated') id = p.args.id; } catch (e) { /* not ours */ }
+    }
+    if (id === null) { toast('Game created. Find it in the list below.', ''); return; }
+    if (BigInt(id) !== BigInt(expected)) {
+      setStatus('Another game was created at the same moment, so your secret doesn\u2019t match this game number. Cancelling it so you can start again…', 'bad', true);
+      const tx2 = await d.cancelGame(id);
+      await tx2.wait();
+      toast('Cancelled. Your stake is under Ready to withdraw. Create the game again.', '');
+      return;
+    }
+    toast('Game ' + id + ' created. Tell your friend to join game ' + id + '.', '');
+  },
+  async join(id) {
+    await needWallet();
+    const d = diceWrite();
+    const g = plain(await diceRead().getGame(id), Number(id));
+    if (g.status !== STATUS.OPEN) throw new Error('Someone else already joined this game, or it was cancelled.');
+    if (same(g.playerA, state.account)) throw new Error('You created this game, so another player needs to join it.');
+    await checkFunds(g.stake);
+    const secret = ethersLib.hexlify(ethersLib.randomBytes(32));
+    const commit = commitOf(secret, state.account, id);
+    saveSecret(commit, secret);
+    await ensureAllowance(g.stake);
+    setStatus('Step 2 of 2: confirm joining game ' + id + ' in your wallet…', '', true);
+    const tx = await d.joinGame(id, commit);
+    setStatus('Joining…', '', true);
+    await tx.wait();
+    toast('Joined game ' + id + '. Both players can reveal now.', '');
+  },
+  async reveal(id) {
+    await needWallet();
+    const g = plain(await diceRead().getGame(id), Number(id));
+    const mineIsA = same(g.playerA, state.account);
+    const myCommit = mineIsA ? g.commitA : g.commitB;
+    let secret = loadSecret(myCommit);
+    if (!secret) {
+      secret = (window.prompt('This browser doesn\u2019t have your secret for game ' + id + '. Paste the secret you backed up (it starts with 0x):') || '').trim();
+      if (!secret) throw new Error('A secret is needed to reveal. Use Restore secrets if you have a backup.');
+    }
+    if (commitOf(secret, state.account, id) !== myCommit) throw new Error('That secret doesn\u2019t match your commitment for game ' + id + '.');
+    setStatus('Confirm the reveal in your wallet…', '', true);
+    const tx = await diceWrite().reveal(id, secret);
+    setStatus('Revealing…', '', true);
+    await tx.wait();
+    toast('Revealed. When both players have revealed, the result shows in the list.', '');
+  },
+  async settle(id) {
+    await needWallet();
+    setStatus('Confirm in your wallet to settle game ' + id + '…', '', true);
+    const tx = await diceWrite().claimForfeit(id);
+    setStatus('Settling…', '', true);
+    await tx.wait();
+    toast('Settled. The pot is now in the winner\u2019s Ready to withdraw balance.', '');
+  },
+  async cancel(id) {
+    await needWallet();
+    setStatus('Confirm in your wallet to cancel game ' + id + '…', '', true);
+    const tx = await diceWrite().cancelGame(id);
+    setStatus('Cancelling…', '', true);
+    await tx.wait();
+    toast('Cancelled. Your stake is under Ready to withdraw.', '');
+  },
+  async withdraw() {
+    await needWallet();
+    await loadWallet();
+    if (state.ready <= 0n) throw new Error('There\u2019s nothing to withdraw yet.');
+    setStatus('Confirm the withdrawal in your wallet…', '', true);
+    const tx = await diceWrite().withdraw();
+    setStatus('Withdrawing…', '', true);
+    await tx.wait();
+    toast('Withdrawn. The USDC is in your wallet.', '');
+  }
+};
+
+async function run(name, arg) {
+  if (state.busy) { toast('Another action is still in progress. Wait for it to finish.', ''); return; }
+  state.busy = true;
+  document.body.classList.add('busy');
+  try {
+    await actions[name](arg);
+  } catch (e) {
+    if (rejected(e)) toast('You cancelled that in your wallet.', '');
+    else if (!(e && e.message === 'no wallet')) toast(errMsg(e), 'bad');
+  } finally {
+    state.busy = false;
+    document.body.classList.remove('busy');
+    if (!$('toast').classList.contains('bad') && $('toast').classList.contains('spin')) clearStatus();
+    await sleep(1500);
+    await refresh();
+  }
+}
+
+/* ---------- wiring ---------- */
+$('connect').addEventListener('click', async () => {
+  try { await connect(false); await refresh(); } catch (e) { if (rejected(e)) toast('You cancelled that in your wallet.', ''); else if (!(e && e.message === 'no wallet')) toast(errMsg(e), 'bad'); }
+});
+$('create').addEventListener('click', () => run('create'));
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-act]');
+  if (!b || b.disabled) return;
+  run(b.dataset.act, b.dataset.id === undefined ? undefined : BigInt(b.dataset.id));
+});
+function setFilter(f) {
+  state.filter = f;
+  $('fAll').setAttribute('aria-pressed', String(f === 'all'));
+  $('fMine').setAttribute('aria-pressed', String(f === 'mine'));
+  renderGames();
+}
+$('fAll').addEventListener('click', () => setFilter('all'));
+$('fMine').addEventListener('click', () => setFilter('mine'));
+
+$('backup').addEventListener('click', async () => {
+  const data = JSON.stringify(allSecrets());
+  try { await navigator.clipboard.writeText(data); toast('Copied your secrets. Paste them somewhere private, like a password manager.', ''); }
+  catch (e) { window.prompt('Copy this and keep it somewhere private:', data); }
+});
+$('restore').addEventListener('click', () => {
+  const txt = window.prompt('Paste the secrets you backed up:');
+  if (!txt) return;
+  try {
+    const obj = JSON.parse(txt);
+    let n = 0;
+    for (const k of Object.keys(obj)) {
+      if (/^0x[0-9a-fA-F]{64}$/.test(k) && /^0x[0-9a-fA-F]{64}$/.test(obj[k])) { saveSecret(k, obj[k]); n++; }
+    }
+    toast('Restored ' + n + ' secret' + (n === 1 ? '' : 's') + '.', '');
+    render();
+  } catch (e) { toast('That doesn\u2019t look like a backup from this page.', 'bad'); }
+});
+
+/* ---------- start ---------- */
+async function boot() {
+  heroDice();
+  $('contractLine').innerHTML = 'Contract <a class="addr" href="' + esc(CONFIG.explorer) + '/address/' + esc(DICE) + '" target="_blank" rel="noopener">' + esc(DICE) + '</a> on Base.';
+  try { await connect(true); } catch (e) { /* not connected yet, that's fine */ }
+  try {
+    await verifyContract();
+  } catch (e) {
+    $('alerts').innerHTML = '<div class="alert">Don\u2019t send any funds from this page. ' + esc(errMsg(e)) + '</div>';
+  }
+  await refresh();
+  setInterval(() => { if (!document.hidden && !state.busy) refresh(); }, 12000);
+}
+boot();
+})();
+</script>
+</body>
+</html>
