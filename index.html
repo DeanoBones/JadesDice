@@ -224,7 +224,9 @@ details{color:#d6e2d8}summary{color:#c8d8cb}footer{max-width:1180px;color:#80958
 .theatre-dice .die.settled{animation:die-settle .65s cubic-bezier(.2,.8,.2,1) both}
 @keyframes die-settle{0%{transform:rotate(18deg) translateY(-16px) scale(1.08)}65%{transform:rotate(-5deg) translateY(3px)}100%{transform:rotate(0) translateY(0)}}
 @keyframes ritual-tumble{from{transform:translateY(8px) rotate(-18deg) scale(.97)}to{transform:translateY(-14px) rotate(22deg) scale(1.04)}}
-.cube-wrap{width:112px;height:112px;display:grid;place-items:center;perspective:650px;flex:0 0 auto}
+.cube-wrap{width:112px;height:112px;display:grid;place-items:center;perspective:650px;flex:0 0 auto;visibility:visible;opacity:1}
+.theatre-dice>.die{display:inline-block;flex:0 0 auto;visibility:visible;opacity:1}
+.cube-face .pips{box-sizing:border-box;display:grid;width:100%;height:100%;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
 .cube{width:82px;height:82px;position:relative;transform-style:preserve-3d;transform:rotateX(-8deg) rotateY(-14deg)}
 .cube-face{position:absolute;inset:0;width:82px;height:82px;border:1px solid #80efb3;border-radius:13px;background:linear-gradient(145deg,#45d79a 0%,#168354 42%,#063d2b 100%);box-shadow:inset 3px 3px 8px rgba(220,255,232,.28),inset -5px -7px 10px rgba(0,0,0,.35);backface-visibility:hidden}
 .cube-face .pips{padding:15%}
@@ -729,7 +731,7 @@ function prepareTheatre(gameId, mode) {
   $('rollTheatre').style.boxShadow = '';
   $('rollTheatre').classList.add('active');
   $('theatreKicker').textContent = 'GAME ' + g.id + ' · THE CELESTIAL TABLE';
-  $('theatreDice').innerHTML = cubeHtml(1, '') + cubeHtml(1, '');
+  $('theatreDice').innerHTML = dieHtml(1, '') + dieHtml(1, '');
   $('theatreResult').textContent = mode === 'ritual' ? 'The ritual awaits your hand' : 'Preparing the sequence…';
   $('theatreWisdom').textContent = '';
   $('theatreWisdom').classList.remove('visible');
