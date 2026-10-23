@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   color-scheme: light;
@@ -242,6 +245,92 @@ details{color:#d6e2d8}summary{color:#c8d8cb}footer{max-width:1180px;color:#80958
 .theatre-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
 @media(max-width:520px){.theatre-dice .die{--s:76px}.cube-wrap{width:94px;height:94px}.cube{width:72px;height:72px}.cube-face{width:72px;height:72px}.cube-face.front{transform:rotateY(0deg) translateZ(36px)}.cube-face.back{transform:rotateY(180deg) translateZ(36px)}.cube-face.right{transform:rotateY(90deg) translateZ(36px)}.cube-face.left{transform:rotateY(-90deg) translateZ(36px)}.cube-face.top{transform:rotateX(90deg) translateZ(36px)}.cube-face.bottom{transform:rotateX(-90deg) translateZ(36px)}.theatre-dice{min-height:110px;gap:12px}.roll-theatre{padding:22px 12px}}
 @media(prefers-reduced-motion:reduce){.theatre-dice .die.tumble{animation:none}.roll-theatre.active{animation:none}.theatre-wisdom{transition:none}}
+
+
+/* The Watch Ritual uses one JS-controlled transform; do not run the legacy cube keyframe. */
+#heroDice .cube.tumble{animation:none!important}
+
+/* Cathayan hero polish: make the jade dice and oracle text the focal point */
+.hero-relic{width:min(100%,760px);min-height:390px;padding:26px 20px 8px;}
+.relic-ring{width:360px;height:360px;box-shadow:0 0 0 28px rgba(47,120,76,.04),0 0 0 64px rgba(47,120,76,.025),inset 0 0 70px rgba(36,157,92,.09);}
+.relic-ring:before{inset:26px}.relic-ring:after{inset:58px}
+.dice-pair{gap:48px;padding:30px 24px;}
+.hero-relic .cube-wrap{width:190px;height:190px;filter:drop-shadow(0 22px 18px rgba(0,0,0,.42)) drop-shadow(0 0 20px rgba(40,184,122,.12));}
+.hero-relic .cube{width:150px;height:150px;}
+.hero-relic .cube-face{width:150px;height:150px;border-radius:17px;background:linear-gradient(145deg,#65e6aa 0%,#23a66c 34%,#0b5a3b 69%,#062e22 100%);border-color:rgba(173,255,207,.8);box-shadow:inset 5px 5px 12px rgba(220,255,232,.32),inset -8px -10px 15px rgba(0,0,0,.4),0 0 22px rgba(37,164,98,.16);}
+.hero-relic .cube-face .pips{padding:16%;}
+.hero-relic .cube-face.front{transform:rotateY(0deg) translateZ(75px)}
+.hero-relic .cube-face.back{transform:rotateY(180deg) translateZ(75px)}
+.hero-relic .cube-face.right{transform:rotateY(90deg) translateZ(75px)}
+.hero-relic .cube-face.left{transform:rotateY(-90deg) translateZ(75px)}
+.hero-relic .cube-face.top{transform:rotateX(90deg) translateZ(75px)}
+.hero-relic .cube-face.bottom{transform:rotateX(-90deg) translateZ(75px)}
+.hero-relic .relic-caption{margin-top:20px;font-size:.78rem;letter-spacing:.24em;text-shadow:0 0 18px rgba(199,163,92,.16);}
+.hero-relic .theatre-wisdom{width:min(100%,660px);max-width:660px;min-height:52px;margin:13px auto 0;color:#e0ddc4;font-family:Georgia,'Cormorant Garamond',serif;font-size:clamp(1.25rem,2.2vw,1.75rem);line-height:1.5;font-style:italic;letter-spacing:.015em;text-shadow:0 0 22px rgba(80,205,135,.12);}
+.hero-relic .theatre-meta{font-size:.75rem;letter-spacing:.16em;margin-top:15px;}
+.hero-relic .theatre-actions{margin-top:20px;}
+/* Numbered dice + oracle message card, adapted from the standalone Jade Dice design */
+.hero-relic .cube-face{overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.hero-relic .cube-face:before{content:"";position:absolute;inset:-25%;background:repeating-linear-gradient(132deg,transparent 0 13px,rgba(193,255,214,.10) 14px,transparent 17px 31px),radial-gradient(ellipse at 27% 18%,rgba(222,255,235,.5),transparent 32%),radial-gradient(ellipse at 78% 80%,rgba(0,15,9,.65),transparent 48%);transform:rotate(9deg);pointer-events:none;}
+.hero-relic .cube-face:after{content:"";position:absolute;inset:6px;border:1px solid rgba(207,255,223,.22);border-radius:12px;pointer-events:none;}
+.hero-relic .face-number{position:relative;z-index:1;font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(54px,6.2vw,82px);font-weight:500;line-height:1;color:#f0d68d;text-shadow:0 1px 0 #785d25,0 0 12px rgba(244,213,128,.26);}
+.theatre-quote-card{position:relative;z-index:2;width:min(100%,620px);min-height:132px;margin:14px auto 0;padding:21px 28px 17px;text-align:center;border:1px solid rgba(200,173,104,.48);background:linear-gradient(135deg,rgba(4,20,13,.78),rgba(7,28,19,.6));box-shadow:0 12px 40px rgba(0,0,0,.18);}
+.theatre-quote-card:before,.theatre-quote-card:after{content:"✧";position:absolute;color:#c8ad68;font-size:16px;background:#08150f;padding:0 6px;}
+.theatre-quote-card:before{top:-10px;left:18px}.theatre-quote-card:after{bottom:-10px;right:18px}
+.theatre-quote-label{font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;color:#c8ad68;margin-bottom:10px;min-height:1em;}
+.hero-relic .theatre-wisdom{width:min(100%,560px);max-width:560px;min-height:54px;margin:0 auto;color:#e0ddc4;font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(1.35rem,2.3vw,1.85rem);line-height:1.35;font-style:italic;letter-spacing:.01em;text-shadow:0 0 22px rgba(80,205,135,.12);opacity:0;transform:translateY(7px);transition:opacity .9s ease,transform .9s ease;}
+.hero-relic .theatre-wisdom.visible{opacity:1;transform:translateY(0)}
+.hero-relic .theatre-meta{color:#8fa893;font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;margin-top:12px;min-height:1em;}
+.hero-relic .theatre-actions{margin-top:20px;position:relative;z-index:2}
+@media(max-width:520px){
+ .theatre-quote-card{padding:18px 15px 15px;min-height:120px;margin-top:10px;}
+ .theatre-quote-label{font-size:.62rem;letter-spacing:.16em;}
+ .hero-relic .face-number{font-size:52px;}
+ .hero-relic .theatre-wisdom{font-size:1.3rem;line-height:1.35;min-height:48px;padding:0 4px;}
+}
+@media(max-width:520px){
+ .hero-relic{min-height:285px;padding:20px 8px 6px;}
+ .relic-ring{width:250px;height:250px;box-shadow:0 0 0 18px rgba(47,120,76,.035),0 0 0 40px rgba(47,120,76,.02),inset 0 0 48px rgba(36,157,92,.07);}
+ .relic-ring:before{inset:18px}.relic-ring:after{inset:38px}
+ .dice-pair{gap:16px;padding:18px 4px;}
+ .hero-relic .cube-wrap{width:122px;height:122px;}
+ .hero-relic .cube{width:100px;height:100px;}
+ .hero-relic .cube-face{width:100px;height:100px;border-radius:13px;}
+ .hero-relic .cube-face.front{transform:rotateY(0deg) translateZ(50px)}
+ .hero-relic .cube-face.back{transform:rotateY(180deg) translateZ(50px)}
+ .hero-relic .cube-face.right{transform:rotateY(90deg) translateZ(50px)}
+ .hero-relic .cube-face.left{transform:rotateY(-90deg) translateZ(50px)}
+ .hero-relic .cube-face.top{transform:rotateX(90deg) translateZ(50px)}
+ .hero-relic .cube-face.bottom{transform:rotateX(-90deg) translateZ(50px)}
+ .hero-relic .theatre-wisdom{font-size:1.15rem;line-height:1.45;min-height:46px;margin-top:10px;padding:0 8px;}
+ .hero-relic .relic-caption{font-size:.66rem;letter-spacing:.17em;}
+}
+
+
+/* Oracle typography, visible starfield, and irregular reference-style dice tumble */
+:root{--font:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif}
+html,body{min-height:100%;background:#06100c}
+body{font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;background:radial-gradient(ellipse at 50% 35%,rgba(18,89,57,.28),transparent 48%),radial-gradient(ellipse at 50% 100%,#0a2118 0%,#06100c 55%),#06100c}
+.hero{background:radial-gradient(ellipse at 50% 20%,rgba(18,89,57,.36),transparent 58%),linear-gradient(180deg,#081810 0%,#06100c 100%);color:#e9e0c4;border-bottom:1px solid rgba(200,173,104,.2)}
+body:before{content:"";position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.22;background-image:radial-gradient(1px 1px at 20% 22%,#e4d39b 50%,transparent 60%),radial-gradient(1px 1px at 79% 17%,#e4d39b 50%,transparent 60%),radial-gradient(2px 2px at 70% 64%,#e4d39b 50%,transparent 60%),radial-gradient(1px 1px at 34% 72%,#e4d39b 50%,transparent 60%),radial-gradient(1px 1px at 88% 82%,#e4d39b 50%,transparent 60%);background-size:410px 360px}
+.hero,.hero-in,main,.frame{position:relative;z-index:2}
+.hero h1,h1,.brand,.relic-caption,.theatre-result,.hero-relic .face-number{font-family:'Cormorant Garamond',Georgia,serif}
+h1{font-weight:500;letter-spacing:.035em;line-height:.98}
+.brand{font-weight:600;letter-spacing:.22em;color:#e9e0c4}
+.hero p,.subtitle,.eyebrow,.theatre-meta,.btn,.chip,.panel,button,input,select,textarea{font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif}
+.hero-relic .theatre-wisdom{font-family:'Cormorant Garamond',Georgia,serif}
+/* Randomized orientation is applied inline to every suspense frame, like the reference page. */
+.hero-relic .cube.tumble{animation:none;transition:transform .08s linear;will-change:transform}
+.hero-relic .cube-wrap:nth-child(2) .cube.tumble{transition-delay:12ms}
+.hero-relic .cube.settled{animation:cube-land .7s cubic-bezier(.18,.82,.25,1) both}
+@media(prefers-reduced-motion:reduce){.hero-relic .cube.tumble{animation:none;transition:none}}
+
+/* Reference-style Watch Ritual: preserve die nodes and smoothly ease the real result into view. */
+.hero-relic .cube.tumble{animation:none!important;will-change:transform;transition:transform 120ms linear;}
+.hero-relic .cube.settled{animation:none!important;will-change:transform;transition:transform 1.05s cubic-bezier(.18,.72,.12,1);}
+.hero-relic .cube-face .face-number{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(3.4rem,7vw,5.2rem);font-weight:600;line-height:1;color:#f0d68d;text-shadow:0 1px 0 #785d25,0 0 12px rgba(244,213,128,.3);backface-visibility:hidden;}
+@media(max-width:520px){.hero-relic .cube-face .face-number{font-size:3.1rem;}}
+@media(prefers-reduced-motion:reduce){.hero-relic .cube.tumble,.hero-relic .cube.settled{transition:none!important;}}
 </style>
 </head>
 <body>
@@ -261,7 +350,7 @@ details{color:#d6e2d8}summary{color:#c8d8cb}footer{max-width:1180px;color:#80958
         <h1>Let jade<br>decide your fate.</h1>
         <p>Two challengers. One shared pot. Roll until the heavens grant a double — and Perfect Harmony claims the wager.</p>
       </div>
-      <div class="hero-relic" id="rollTheatre"><div class="relic-ring"></div><div class="dice-pair" id="heroDice" aria-hidden="true"></div><div class="relic-caption" id="theatreResult">THE DICE OF DESTINY</div><div class="theatre-wisdom" id="theatreWisdom">Fortune favours the balanced hand</div><div class="theatre-meta" id="theatreMeta"></div><div class="theatre-actions"><button class="btn primary" id="nextRoll" disabled>Choose a completed game</button></div></div>
+      <div class="hero-relic" id="rollTheatre"><div class="relic-ring"></div><div class="dice-pair" id="heroDice" aria-hidden="true"></div><section class="theatre-quote-card" aria-live="polite" aria-atomic="true"><div class="theatre-quote-label" id="theatreResult">THE DICE OF DESTINY</div><div class="theatre-wisdom" id="theatreWisdom">Fortune favours the balanced hand</div><div class="theatre-meta" id="theatreMeta"></div></section><div class="theatre-actions"><button class="btn primary" id="nextRoll" disabled>Choose a completed game</button></div></div>
     </div>
   </div>
 </div>
@@ -419,14 +508,15 @@ function dieHtml(n, cls) {
   return '<span class="die ' + (cls || '') + '" role="img" aria-label="' + n + '"><span class="pips">' + cells + '</span></span>';
 }
 function cubeHtml(n, cls) {
-  const vals = [n, (n % 6) + 1, ((n + 1) % 6) + 1, ((n + 2) % 6) + 1, ((n + 3) % 6) + 1, ((n + 4) % 6) + 1];
+  // The numerals are engraved on fixed faces; the cube's orientation determines which one is visible.
+  const vals = [1, 6, 3, 4, 2, 5]; // opposite faces sum to seven
   const faces = ['front','back','right','left','top','bottom'];
-  const html = faces.map((face, i) => {
-    let cells = '';
-    for (let j = 0; j < 9; j++) cells += PIPS[vals[i]].includes(j) ? '<i class="pip"></i>' : '<i></i>';
-    return '<span class="cube-face ' + face + '"><span class="pips">' + cells + '</span></span>';
-  }).join('');
+  const html = faces.map((face, i) => '<span class="cube-face ' + face + '"><span class="face-number">' + vals[i] + '</span></span>').join('');
   return '<span class="cube-wrap" role="img" aria-label="Die shows ' + n + '"><span class="cube ' + (cls || '') + '">' + html + '</span></span>';
+}
+function cubeOrientation(value) {
+  // Rotations that bring the fixed face for this value to the front.
+  return ({ 1:{x:0,y:0,z:0}, 2:{x:-90,y:0,z:0}, 3:{x:0,y:-90,z:0}, 4:{x:0,y:90,z:0}, 5:{x:90,y:0,z:0}, 6:{x:0,y:180,z:0} })[value];
 }
 function replay(secretA, secretB) {
   const seed = ethersLib.keccak256(abi.encode(['bytes32', 'bytes32'], [secretA, secretB]));
@@ -447,17 +537,32 @@ function wisdomLabel(a, b) {
 }
 const commitOf = (secret, addr, id) => ethersLib.keccak256(abi.encode(['bytes32', 'address', 'uint256'], [secret, addr, id]));
 
-/* hero dice: tumble once on load, land on a double */
+/* hero dice: keep engraved numerals fixed and rotate the same two cubes into a display double */
 function heroDice() {
   const box = $('heroDice');
   const final = 1 + Math.floor(Math.random() * 6);
-  const show = (a, b, tumbling) => {
-    box.innerHTML = cubeHtml(a, tumbling ? 'tumble' : 'settled') + cubeHtml(b, tumbling ? 'tumble' : 'settled');
-  };
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { show(final, final, false); return; }
-  show(1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6), true);
-  const timer = setInterval(() => show(1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6), true), 90);
-  setTimeout(() => { clearInterval(timer); show(final, final, false); }, 1100);
+  const wraps = [cubeHtml(1, ''), cubeHtml(1, '')];
+  box.innerHTML = wraps.join('');
+  const cubes = Array.from(box.querySelectorAll('.cube'));
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  cubes.forEach((cube, i) => {
+    const target = cubeOrientation(final);
+    cube.style.animation = 'none';
+    cube.style.transition = 'none';
+    cube.style.transform = i === 0
+      ? 'rotateX(-18deg) rotateY(28deg) rotateZ(0deg)'
+      : 'rotateX(16deg) rotateY(-32deg) rotateZ(5deg)';
+    if (reduced) cube.style.transform = `rotateX(${target.x}deg) rotateY(${target.y}deg) rotateZ(${target.z}deg)`;
+  });
+  if (reduced) return;
+  void box.offsetWidth;
+  cubes.forEach((cube, i) => {
+    const target = cubeOrientation(final);
+    const sign = i === 0 ? 1 : -1;
+    cube.style.transition = 'transform 1.1s cubic-bezier(.18,.72,.12,1)';
+    cube.style.transform = `rotateX(${target.x + sign*720}deg) rotateY(${target.y + sign*1080}deg) rotateZ(${target.z + sign*360}deg)`;
+  });
+  setTimeout(() => cubes.forEach(cube => { cube.style.transition = 'none'; }), 1200);
 }
 
 /* ---------- secrets stored in this browser, keyed by commitment ---------- */
@@ -680,17 +785,44 @@ async function animateRitualRoll(index, token) {
   result.textContent = 'The heavens are turning…';
   meta.textContent = 'ROLL ' + (index + 1) + ' OF ' + watchedRolls.length + ' · ' + (index % 2 === 0 ? nameOf(g.playerA) : nameOf(g.playerB)) + ' rolls';
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduced) {
-    const endAt = Date.now() + 2400;
-    while (Date.now() < endAt) {
-      if (token !== watchRunToken) { ritualBusy = false; return; }
-      const a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6);
-      dice.innerHTML = cubeHtml(a, 'tumble') + cubeHtml(b, 'tumble');
-      await pause(85);
-    }
+
+  // Keep the same dice mounted and the six numerals fixed to their physical faces.
+  // Only the cube orientation changes; it lands with the verified result facing forward.
+  let wraps = Array.from(dice.querySelectorAll('.cube-wrap'));
+  if (wraps.length !== 2) {
+    dice.innerHTML = cubeHtml(1, '') + cubeHtml(1, '');
+    wraps = Array.from(dice.querySelectorAll('.cube-wrap'));
   }
+  const cubes = wraps.map(w => w.querySelector('.cube'));
+  const duration = reduced ? 0 : 2200;
+  const starts = [
+    { x: -18, y: 28, z: 0 },
+    { x: 16, y: -32, z: 5 }
+  ];
+
+  cubes.forEach((cube, i) => {
+    cube.classList.remove('tumble', 'settled');
+    cube.style.animation = 'none';
+    cube.style.transition = 'none';
+    cube.style.transform = `rotateX(${starts[i].x}deg) rotateY(${starts[i].y}deg) rotateZ(${starts[i].z}deg)`;
+  });
+  // Commit the starting pose, then perform one continuous eased tumble to the true result.
+  void dice.offsetWidth;
+  cubes.forEach((cube, i) => {
+    const target = cubeOrientation(actual[i]);
+    const sign = i === 0 ? 1 : -1;
+    cube.style.transition = reduced ? 'none' : `transform ${duration/1000}s cubic-bezier(.18,.72,.12,1)`;
+    cube.style.transform = `rotateX(${target.x + sign*720}deg) rotateY(${target.y + sign*1080}deg) rotateZ(${target.z + sign*360}deg)`;
+  });
+
+  if (!reduced) await pause(duration + 60);
   if (token !== watchRunToken) { ritualBusy = false; return; }
-  dice.innerHTML = cubeHtml(actual[0], 'settled') + cubeHtml(actual[1], 'settled');
+  cubes.forEach(cube => {
+    cube.style.transition = 'none';
+    cube.classList.remove('tumble', 'settled');
+  });
+  wraps.forEach((wrap, i) => wrap.setAttribute('aria-label', 'Die shows ' + actual[i]));
+  if (token !== watchRunToken) { ritualBusy = false; return; }
   const harmony = actual[0] === actual[1];
   result.textContent = harmony ? (actual[0] === 1 ? 'PERFECT HARMONY' : 'HARMONY') : actual[0] + ' · ' + actual[1];
   wisdom.textContent = wisdomLabel(actual[0], actual[1]);
@@ -708,6 +840,7 @@ async function animateRitualRoll(index, token) {
   ritualIndex = index + 1;
   ritualBusy = false;
 }
+
 function prepareTheatre(gameId, mode) {
   const g = state.games.find(x => String(x.id) === String(gameId));
   if (!g) return;
